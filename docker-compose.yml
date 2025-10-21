@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pdf-parse-transform-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pdf-parse-transform-mcp
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./app:/app/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m app.mcp_server
+    depends_on:
+      - fastapi
+
+networks:
+  default:
+    name: pdf-parse-transform-network
