@@ -1,0 +1,6 @@
+{
+  "powerquery.client.additionalSymbolsDirectories": [
+    "c:/Users/Sean Steyn/OneDrive - VidaE/Documents/Python Projects - Vida/pdf-parse-transform/pdf-parse-transform/.vscode/excel-pq-symbols"
+  ],
+  "trivy.useIgnoreFile": false
+}

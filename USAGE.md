@@ -15,7 +15,30 @@ chmod +x run.sh
 ./run.sh
 ```
 
-### 2. Upload and Parse a PDF
+### 2. Pre-flight Validation
+
+Before starting the service, you can run validation checks to ensure all dependencies and configurations are correct:
+
+**On Linux/macOS:**
+```bash
+./validate.sh
+```
+
+**On Windows:**
+```powershell
+.\validate.ps1
+```
+
+These scripts will:
+
+- Verify Poetry is installed
+- Check that all essential files exist (`pyproject.toml`, `poetry.lock`, `Dockerfile`, `docker-compose.yml`)
+- Ensure `pyproject.toml` and `poetry.lock` are synchronized
+- Exit with an error if any issues are found
+
+The Docker container automatically runs validation before starting the application.
+
+### 3. Upload and Parse a PDF
 
 #### Using cURL
 
@@ -35,6 +58,12 @@ curl -X POST "http://localhost:8000/api/v1/parse" \
   -F "file=@scanned.pdf" \
   -F "output_format=plain_text" \
   -F "force_ocr=true"
+
+# On Windows PowerShell, use curl.exe with backticks for line continuation
+curl.exe -X POST "http://localhost:8000/api/v1/parse" `
+  -F "file=@document.pdf" `
+  -F "output_format=csv" `
+  -o "output.csv"
 ```
 
 #### Using Python
@@ -86,6 +115,27 @@ async function parsePDF(filePath, format = 'json') {
 parsePDF('document.pdf', 'markdown')
     .then(result => console.log(result))
     .catch(error => console.error(error));
+```
+
+#### Using PowerShell (Windows)
+
+```powershell
+# Parse to CSV and save to file
+$form = @{
+    file = Get-Item -Path "document.pdf"
+    output_format = "csv"
+}
+
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/parse" `
+  -Method Post `
+  -Form $form `
+  -OutFile "output.csv"
+
+# Or using curl.exe
+curl.exe -X POST "http://localhost:8000/api/v1/parse" `
+  -F "file=@document.pdf" `
+  -F "output_format=csv" `
+  -o "output.csv"
 ```
 
 ## Output Format Examples
@@ -144,9 +194,26 @@ This is the content of page 2...
 ### CSV Output
 
 ```csv
-Page Number,Content
-1,"This is the content of page 1..."
-2,"This is the content of page 2..."
+Page Number,Content,Has Tables,OCR Processed
+1,"Item,Supplier,Date,Qty,Cost",Yes,No
+```
+
+**For PDFs with Tables**: If the PDF contains structured tables, the CSV will automatically extract and format the tabular data as proper columns instead of plain text.
+
+**Converting JSON Response to CSV**: If you've already downloaded a JSON response, use the standalone converter:
+
+```bash
+python save_as_csv_standalone.py response.json output.csv
+```
+
+Or directly get CSV from the API:
+
+```bash
+# Get CSV directly from the API
+curl -X POST "http://localhost:8000/api/v1/parse" \
+  -F "file=@document.pdf" \
+  -F "output_format=csv" \
+  -o output.csv
 ```
 
 ## Advanced Usage
@@ -305,7 +372,9 @@ For full functionality, use the FastAPI REST API at `http://localhost:8000/api/v
 ## Troubleshooting
 
 ### "Tesseract not found" Error
+
 Install Tesseract OCR:
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install tesseract-ocr
@@ -318,7 +387,9 @@ brew install tesseract
 ```
 
 ### "Poppler not found" Error
+
 Install Poppler utilities:
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install poppler-utils
@@ -331,7 +402,9 @@ brew install poppler
 ```
 
 ### Connection Refused
+
 Ensure the service is running:
+
 ```bash
 docker-compose ps
 # or
@@ -339,6 +412,7 @@ curl http://localhost:8000/api/v1/health
 ```
 
 ### Slow Processing
+
 - Check if OCR is being used unnecessarily
 - Reduce file size or split large PDFs
 - Increase Docker resource limits

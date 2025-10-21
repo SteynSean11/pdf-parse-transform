@@ -60,6 +60,56 @@ async def parse_pdf(
         )
 
 
+@router.post("/export-csv", response_model=PDFParseResponse)
+async def export_csv(
+    file: UploadFile = File(..., description="PDF file to parse and export as CSV"),
+    force_ocr: bool = Form(default=False, description="Force OCR processing"),
+    include_metadata: bool = Form(default=True, description="Include metadata in output")
+):
+    """
+    Parse a PDF file and return content as CSV format
+    
+    - **file**: PDF file to process
+    - **force_ocr**: Force OCR even for text-based PDFs
+    - **include_metadata**: Include document metadata in output
+    """
+    # Validate file type
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    
+    try:
+        # Read PDF file
+        pdf_bytes = await file.read()
+        
+        if len(pdf_bytes) == 0:
+            raise HTTPException(status_code=400, detail="Empty PDF file")
+        
+        # Process PDF
+        content, quality, metadata = pdf_processor.process(
+            pdf_bytes=pdf_bytes,
+            output_format=OutputFormat.CSV,  # Force CSV output
+            force_ocr=force_ocr,
+            include_metadata=include_metadata
+        )
+        
+        return PDFParseResponse(
+            success=True,
+            quality_assessment=quality,
+            output_format=OutputFormat.CSV,
+            content=content,
+            metadata=metadata if include_metadata else None
+        )
+        
+    except Exception as e:
+        return PDFParseResponse(
+            success=False,
+            quality_assessment="text_based",  # Default value for error case
+            output_format=OutputFormat.CSV,
+            content="",
+            error=str(e)
+        )
+
+
 @router.get("/health")
 async def health_check():
     """Health check endpoint"""

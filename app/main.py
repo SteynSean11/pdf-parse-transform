@@ -2,13 +2,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
-from app import __version__
+from app.core.config import settings
 
 # Create FastAPI app
 app = FastAPI(
-    title="PDF Parse Transform",
+    title=settings.APP_NAME,
     description="A FastAPI service for parsing and transforming PDF documents",
-    version=__version__,
+    version=settings.APP_VERSION,
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -30,8 +30,8 @@ app.include_router(router, prefix="/api/v1", tags=["PDF Processing"])
 async def root():
     """Root endpoint"""
     return {
-        "service": "PDF Parse Transform",
-        "version": __version__,
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
         "docs": "/docs",
         "api": "/api/v1"
     }
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",
-        port=8000,
+        host=settings.APP_HOST,
+        port=settings.APP_PORT,
         reload=True
     )

@@ -9,15 +9,24 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-eng \
     poppler-utils \
-    libgl1-mesa-glx \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file
-COPY requirements.txt .
+# Install Poetry
+RUN pip install poetry
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Configure Poetry to not create virtual environments
+RUN poetry config virtualenvs.create false
+
+# Copy Poetry dependency files
+COPY pyproject.toml poetry.lock* ./
+
+# Install Python dependencies using Poetry
+RUN poetry install --no-root --no-dev
+
+# Copy validation script and make it executable
+COPY validate.sh .
+RUN chmod +x validate.sh
 
 # Copy application code
 COPY app/ ./app/
@@ -33,4 +42,4 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Default command (can be overridden in docker-compose)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

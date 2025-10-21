@@ -12,7 +12,7 @@ services:
       - ./app:/app/app
     environment:
       - PYTHONUNBUFFERED=1
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: bash -c "./validate.sh poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s
