@@ -38,7 +38,6 @@ docker-compose up -d
 ```
 
 The FastAPI service will be available at `http://localhost:8000`
-The MCP server will be available at `http://localhost:8001`
 
 ### Local Installation
 
@@ -56,11 +55,6 @@ pip install -r requirements.txt
 3. Run the FastAPI server:
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-4. Run the MCP server (optional):
-```bash
-python -m app.mcp_server
 ```
 
 ## Usage
@@ -117,31 +111,39 @@ curl "http://localhost:8000/api/v1/formats"
 curl "http://localhost:8000/api/v1/health"
 ```
 
-### FastMCP 2.0 Tools
+### MCP Tools (Tool Implementations Available)
 
-The MCP server exposes three tools:
+The application provides MCP-compatible tool implementations that can be used programmatically:
 
+**Available Tools**:
 1. **parse_pdf**: Parse a PDF and return content in specified format
 2. **list_supported_formats**: Get list of available output formats
 3. **evaluate_pdf_quality**: Assess PDF quality without full processing
 
-**Example using MCP**:
+**Example using the tool implementations**:
 ```python
 import base64
-from mcp.client import Client
+from app.mcp_server import PDFMCPTools
+
+# Initialize tools
+tools = PDFMCPTools()
 
 # Encode PDF
 with open('document.pdf', 'rb') as f:
     pdf_base64 = base64.b64encode(f.read()).decode()
 
-# Use MCP tool
-result = client.call_tool('parse_pdf', {
-    'pdf_base64': pdf_base64,
-    'output_format': 'markdown',
-    'force_ocr': False,
-    'include_metadata': True
-})
+# Use the parse_pdf tool
+result = tools.parse_pdf(
+    pdf_base64=pdf_base64,
+    output_format='markdown',
+    force_ocr=False,
+    include_metadata=True
+)
+
+print(result['content'])
 ```
+
+**Note**: The MCP server library (mcp==1.10.0) currently has compatibility issues with Python 3.12. The tool implementations are available and fully functional, but the stdio MCP server is not running. Use the FastAPI REST API for full functionality, or use the `PDFMCPTools` class directly in your Python code.
 
 ## API Documentation
 

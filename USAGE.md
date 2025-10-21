@@ -231,22 +231,37 @@ def safe_parse_pdf(filepath, **kwargs):
 
 ## MCP Integration
 
-### Using with Claude Desktop
+**Note**: The MCP server library currently has compatibility issues with Python 3.12. However, the MCP tool implementations are available and can be used programmatically.
 
-Add to your Claude Desktop config:
+### Using MCP Tool Implementations Directly
 
-```json
-{
-  "mcpServers": {
-    "pdf-parse-transform": {
-      "command": "docker",
-      "args": ["exec", "-i", "pdf-parse-transform-mcp", "python", "-m", "app.mcp_server"]
-    }
-  }
-}
+```python
+import base64
+from app.mcp_server import PDFMCPTools
+
+# Initialize tools
+tools = PDFMCPTools()
+
+# Encode PDF
+with open('document.pdf', 'rb') as f:
+    pdf_base64 = base64.b64encode(f.read()).decode()
+
+# Parse PDF
+result = tools.parse_pdf(
+    pdf_base64=pdf_base64,
+    output_format='markdown',
+    force_ocr=False,
+    include_metadata=True
+)
+
+# List formats
+formats = tools.list_supported_formats()
+
+# Evaluate quality
+quality = tools.evaluate_pdf_quality(pdf_base64)
 ```
 
-### Available MCP Tools
+### Available MCP Tool Implementations
 
 1. **parse_pdf**
    - Parses PDF and returns content
@@ -259,6 +274,8 @@ Add to your Claude Desktop config:
 3. **evaluate_pdf_quality**
    - Assesses PDF quality
    - Parameters: pdf_base64
+
+For full functionality, use the FastAPI REST API at `http://localhost:8000/api/v1/`
 
 ## Tips and Best Practices
 
